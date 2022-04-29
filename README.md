@@ -18,18 +18,18 @@ Attempt to build a whole home esp32 based wired sensor setup.
 1. Window / Door Contact (
 2. Espresense (BLE, PIR, Radar, LUX)
 3. Asset Tracking (iBeacon, Phone)
-4. Temp and Humidity Sensors
-5. Weight Scales (Bed, Couch, Gas)
-6. Water Temperature Sensors
-7. Water Level Sensor
-8. Flood Water Leak Detector
+4. Temp and Humidity Sensors (Xiaomi Mijia Bluetooth Thermometer)
+5. Weight Scales (Bed, Couch, Gas Remaining)
+6. Water Temperature Sensors (Geyser outlet)
+7. Water Level Sensor (Water Tank)
+8. Flood Water Leak Detector (Lower Garage, Kitchen, Bathroom)
 9. Water Shut-off Valves (Main house)
-10. Water Solenoid Valve
+10. Water Solenoid Valve (Irrigation)
 11. Water Flow Meter
 12. IR Control (Aircons, TV, Receivers, Humidifiers, Fans, PC, CCTV)
 13. Garage Door Opener
 14. Gate Opener
-15. Intercom
+15. Intercom (Dahul VTO)
 16. Power Monitor (PZEM-004T v3, POW R2, POW R3)
 17. Power Control
 18. Blind Control with Motor / Actuator
