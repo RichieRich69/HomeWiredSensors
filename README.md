@@ -8,6 +8,7 @@ Attempt to build a whole home esp32 based wired sensor setup.
 * [Air Conditioner BTU Calculator](https://www.omnicalculator.com/construction/air-conditioner-room-size)
 * [Paint Calculator](https://www.omnicalculator.com/construction/paint)
 * [Stair Calculator](https://www.omnicalculator.com/construction/stairs)
+* [3-way Switch Wiring & Relays](https://ncd.io/relay-logic/)
 
 ## Automation Sections
 
