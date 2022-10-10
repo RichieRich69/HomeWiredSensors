@@ -4,6 +4,11 @@ Attempt to build a whole home esp32 based wired sensor setup.
 ## Important links
 * [Voltage Drop Calculator](https://www.rapidtables.com/calc/wire/voltage-drop-calculator.html)
 * [Combined Wire Gauge Calculator](https://www.wirebarn.com/combined-wire-gauge-calculator_ep_42.html)
+* [Tile Calculator](https://www.omnicalculator.com/construction/tile)
+* [Air Conditioner BTU Calculator](https://www.omnicalculator.com/construction/air-conditioner-room-size)
+* [Paint Calculator](https://www.omnicalculator.com/construction/paint)
+* [Stair Calculator](https://www.omnicalculator.com/construction/stairs)
+* [3-way Switch Wiring & Relays](https://ncd.io/relay-logic/)
 
 ## Automation Sections
 
@@ -28,8 +33,9 @@ Attempt to build a whole home esp32 based wired sensor setup.
 11. Water Flow Meter
 12. IR Control (Aircons, TV, Receivers, Humidifiers, Fans, PC, CCTV)
 13. Garage Door Opener
-14. Gate Opener
-15. Intercom (Dahul VTO)
-16. Power Monitor (PZEM-004T v3, POW R2, POW R3)
-17. Power Control
-18. Blind Control with Motor / Actuator
+14. Garage Park Assistant
+15. Gate Opener
+16. Intercom (Dahul VTO)
+17. Power Monitor (PZEM-004T v3, POW R2, POW R3)
+18. Power Control
+19. Blind Control with Motor / Actuator
