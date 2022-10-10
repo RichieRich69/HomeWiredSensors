@@ -1,0 +1,456 @@
+substitutions:
+# https://esphome.io/guides/configuration-types.html#substitutions
+  device_name: garage-park-assistant
+  device_id: garage_park_assistant
+  friendly_name: Garage Park Assistant
+  ip_address: !secret garage_park_assistant_ip
+  icon: "mdi:map-marker-distance"
+  update_interval_fast: 0.1s
+  update_interval_slow: 60s
+
+esphome:
+  name: ${device_name}
+  comment: "Finds the proximity"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable WIFI Connectivity
+wifi:
+  use_address: "${ip_address}"
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_psk
+      priority: 0.5
+    - ssid:  !secret wifi_psk2
+      password: !secret wifi_psk
+      priority: 0.0
+  manual_ip:                   
+    static_ip: ${ip_address}
+    gateway: !secret wifi_gateway
+    subnet: !secret wifi_subnet
+    dns1: !secret wifi_dns1
+  ap:
+    ssid: ${device_name}
+
+# Enable WIFI Configuration Page Fallback mechanism
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  reboot_timeout: 0s
+  password: !secret api_password
+
+ota:
+ password: !secret ota_password
+ 
+web_server:
+  port: 80
+  
+time:
+  - platform: sntp
+    id: ${device_id}_time
+    on_time:
+      # Every 5 minutes
+      - seconds: 0
+        minutes: /5
+        then:
+          - if:
+              condition:
+                sensor.in_range:
+                  id: ${device_id}_distance_1
+                  above: 0.30
+                  below: 1.50
+              then:
+                - binary_sensor.template.publish: # White Polo On
+                    id: white_polo
+                    state: on
+              else:
+                - binary_sensor.template.publish: # White Polo Off
+                    id: white_polo
+                    state: off
+          - if:
+              condition:
+                sensor.in_range:
+                  id: ${device_id}_distance_2
+                  above: 0.30
+                  below: 1.50
+              then:
+                - binary_sensor.template.publish: # Grey Polo On
+                    id: grey_polo
+                    state: on
+              else:
+                - binary_sensor.template.publish: # Grey Polo Off
+                    id: grey_polo
+                    state: off
+switch:
+  - platform: restart
+    name: ${friendly_name} Restart
+
+binary_sensor:
+  - platform: template
+    name: Grey Polo
+    id: grey_polo
+    device_class: presence
+    icon: mdi:car
+  - platform: template
+    name: White Polo
+    id: white_polo
+    device_class: presence
+    icon: mdi:car
+    
+light:
+  - platform: partition
+    name: ${friendly_name} Light Parking 1
+    id: ${device_id}_light_part_1
+    default_transition_length: 0s
+    segments:
+      # Use first 5 LEDs from the light
+      - id:  ${device_id}_light
+        from: 0
+        to: 4
+    effects:
+      - addressable_scan:
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 0s
+          update_interval: 0.5s
+      - pulse:
+          name: "Pulse"
+          transition_length: 0s
+          update_interval: 0.3s
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0s
+          update_interval: 0.1s
+          
+  - platform: partition
+    name: ${friendly_name} Light Parking 2
+    id:  ${device_id}_light_part_2
+    default_transition_length: 0s
+    segments:
+      # Use LEDs 6-10 from the light
+      - id:  ${device_id}_light
+        from: 5
+        to: 9
+    effects:
+      - addressable_scan:
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 0s
+          update_interval: 0.5s
+      - pulse:
+          name: "Pulse"
+          transition_length: 0s
+          update_interval: 0.3s
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0s
+          update_interval: 0.1s
+          
+  - platform: neopixelbus
+    type: GRBW
+    variant: SK6812
+    pin: GPIO18
+    default_transition_length: 0s
+    num_leds: 10
+    id: ${device_id}_light
+    name: ${friendly_name} Light
+    effects:
+      - addressable_scan:
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 0s
+          update_interval: 0.5s
+      - pulse:
+          name: "Pulse"
+          transition_length: 0s
+          update_interval: 0.3s
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0s
+          update_interval: 0.1s
+
+sensor:
+  - platform: wifi_signal
+    name: ${friendly_name} Wifi Signal
+    update_interval: 60s
+    
+  - platform: uptime
+    name: ${friendly_name} Uptime
+    
+  - platform: ultrasonic
+    trigger_pin: GPIO17
+    echo_pin: GPIO16
+    name: ${friendly_name} Distance 1
+    id: ${device_id}_distance_1
+    update_interval: ${update_interval_slow}
+    filters:
+      - filter_out: nan
+    on_value_range:
+      - below: 0.30
+        then:
+        - light.turn_off: #Off
+            id: ${device_id}_light_part_1
+            state: off
+        - binary_sensor.template.publish: # White Polo Off
+            id: white_polo
+            state: off
+      - above: 0.30
+        below: 0.60
+        then:
+        - light.turn_on: #Red Solid
+            id: ${device_id}_light_part_1
+            brightness: 100%
+            color_brightness: 100%
+            red: 100%
+            green: 0
+            blue: 0
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # White Polo On
+            id: white_polo
+            state: on
+      - above: 0.60
+        below: 0.80
+        then:
+        - light.turn_on: #Orange
+            id: ${device_id}_light_part_1
+            brightness: 100%
+            color_brightness: 100%
+            red: 100%
+            green: 50%
+            blue: 0%
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # White Polo On
+            id: white_polo
+            state: on
+      - above: 0.80
+        below: 1.10
+        then:
+        - light.turn_on: #Yellow
+            id: ${device_id}_light_part_1
+            brightness: 100%
+            color_brightness: 100%
+            red: 100%
+            green: 100%
+            blue: 0
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # White Polo On
+            id: white_polo
+            state: on
+      - above: 1.10
+        below: 1.50
+        then:
+        - light.turn_on: #Green
+            id: ${device_id}_light_part_1
+            brightness: 100%
+            color_brightness: 100%
+            red: 0
+            green: 100%
+            blue: 0
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # White Polo On
+            id: white_polo
+            state: on
+      - above: 1.50
+        below: 1.70
+        then:
+        - light.turn_on: #Green
+            id: ${device_id}_light_part_1
+            brightness: 100%
+            color_brightness: 100%
+            red: 0%
+            green: 0%
+            blue: 100%
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # White Polo Off
+            id: white_polo
+            state: off
+      - above: 1.70
+        then:
+        - light.turn_off: #Off
+            id: ${device_id}_light_part_1
+        - binary_sensor.template.publish: # White Polo Off
+            id: white_polo
+            state: off
+    
+  - platform: ultrasonic
+    trigger_pin: GPIO22
+    echo_pin: GPIO21
+    name: ${friendly_name} Distance 2
+    id: ${device_id}_distance_2
+    update_interval: ${update_interval_slow}
+    filters:
+      - filter_out: nan
+    on_value_range:
+      - below: 0.30
+        then:
+        - light.turn_off: #Off
+            id: ${device_id}_light_part_2
+            state: off
+        - binary_sensor.template.publish: # Grey Polo Off
+            id: grey_polo
+            state: off
+      - above: 0.30
+        below: 0.60
+        then:
+        - light.turn_on: #Red Solid
+            id: ${device_id}_light_part_2
+            brightness: 100%
+            color_brightness: 100%
+            red: 100%
+            green: 0
+            blue: 0
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # Grey Polo On
+            id: grey_polo
+            state: on
+      - above: 0.60
+        below: 0.80
+        then:
+        - light.turn_on: #Orange
+            id: ${device_id}_light_part_2
+            brightness: 100%
+            color_brightness: 100%
+            red: 100%
+            green: 50%
+            blue: 0%
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # Grey Polo On
+            id: grey_polo
+            state: on
+      - above: 0.80
+        below: 1.10
+        then:
+        - light.turn_on: #Yellow
+            id: ${device_id}_light_part_2
+            brightness: 100%
+            color_brightness: 100%
+            red: 100%
+            green: 100%
+            blue: 0
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # Grey Polo On
+            id: grey_polo
+            state: on
+      - above: 1.10
+        below: 1.50
+        then:
+        - light.turn_on: #Green
+            id: ${device_id}_light_part_2
+            brightness: 100%
+            color_brightness: 100%
+            red: 0
+            green: 100%
+            blue: 0
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # Grey Polo On
+            id: grey_polo
+            state: on
+      - above: 1.50
+        below: 1.70
+        then:
+        - light.turn_on: #Green
+            id: ${device_id}_light_part_2
+            brightness: 100%
+            color_brightness: 100%
+            red: 0%
+            green: 0%
+            blue: 100%
+            white: 10%
+            effect: "None"
+        - binary_sensor.template.publish: # Grey Polo Off
+            id: grey_polo
+            state: off
+      - above: 1.70
+        then:
+        - light.turn_off: #Off
+            id: ${device_id}_light_part_2
+        - binary_sensor.template.publish: # Grey Polo Off
+            id: grey_polo
+            state: off
+
+interval:
+  - interval: ${update_interval_fast}
+    then:
+      - if:
+          condition:
+            or: 
+              - text_sensor.state:
+                  id: garage_door_status
+                  state: 'Opening'
+              - text_sensor.state:
+                  id: garage_door_status
+                  state: 'Open' 
+          then:
+            - component.update: ${device_id}_distance_2
+            - component.update: ${device_id}_distance_1
+
+text_sensor:
+  - platform: version
+    name: ${friendly_name} ESPHome Version
+    
+  - platform: homeassistant
+    name: "Garage Door Status"
+    entity_id: sensor.garage_door_status
+    id: garage_door_status
+    internal: true
+    on_value:
+      then:
+       - if:
+           condition:
+             text_sensor.state:
+               id: garage_door_status
+               state: 'Closed'
+           then:
+            - light.turn_off:
+                 id: ${device_id}_light
+                 transition_length: 3s
+       - if:
+           condition:
+            or:
+              - text_sensor.state:
+                  id: garage_door_status
+                  state: 'Closing'
+              - text_sensor.state:
+                  id: garage_door_status
+                  state: 'Opening'
+           then:
+            - light.turn_on:
+                 id: ${device_id}_light
+                 brightness: 100%
+                 color_brightness: 100%
+                 red: 100%
+                 green: 100%
+                 blue: 100%
+                 white: 100%
+                 effect: "Scan"
+       - if:
+           condition:
+             text_sensor.state:
+               id: garage_door_status
+               state: 'Open'
+           then:
+             - light.turn_on:
+                 id: ${device_id}_light
+                 brightness: 100%
+                 color_brightness: 100%
+                 red: 100%
+                 green: 100%
+                 blue: 100%
+                 white: 100%
+                 effect: "None"
